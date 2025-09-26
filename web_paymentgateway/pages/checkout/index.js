@@ -60,7 +60,6 @@ export default function CheckoutPage() {
         Checkout
       </h2>
 
-
       <div className="w-full max-w-3xl bg-white shadow-lg rounded-xl p-6">
         {/* Tabel produk */}
         <table className="w-full text-left border-collapse">

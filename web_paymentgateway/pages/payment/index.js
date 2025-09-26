@@ -1,6 +1,7 @@
 // pages/payment/index.js
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import Image from "next/image";
 
 export default function PaymentPage() {
   const router = useRouter();
@@ -27,25 +28,61 @@ export default function PaymentPage() {
     const data = await res.json();
     setLoading(false);
     if (data.success && data.invoiceUrl) {
-      // redirect user to Xendit invoice URL
-      window.location.href = data.invoiceUrl;
+      window.location.href = data.invoiceUrl; // redirect ke Xendit
     } else {
       alert("Gagal membuat invoice: " + (data.error || JSON.stringify(data.raw || data)));
     }
   }
 
-  if (!checkout) return <div className="p-6">Loading...</div>;
+  if (!checkout) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#fdf6ec]">
+        <p className="text-[#8B0000] font-semibold">Memuat pembayaran...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">Pembayaran</h1>
-      <div className="border rounded p-4 mb-4">
-        <p>Checkout ID: {checkout._id}</p>
-        <p>Total: Rp {Number(checkout.total).toLocaleString()}</p>
+    <div className="min-h-screen bg-[#fdf6ec] flex flex-col items-center py-10 px-4">
+      {/* Header */}
+      <header className="flex items-center justify-center gap-4">
+        <Image
+          src="/images/logo-pudinginaja.jpg" // pastikan logo ada di /public/images
+          alt="pudinginaja logo"
+          width={60}
+          height={60}
+          className="rounded-full"
+        />
+        <h1 className="text-3xl font-extrabold text-[#8B0000]">pudinginaja.jkt</h1>
+      </header>
+
+      {/* Judul */}
+      <h2 className="text-2xl font-bold text-[#8B0000] my-6 w-full max-w-2xl text-left">
+        Pembayaran
+      </h2>
+
+      {/* Card Ringkasan */}
+      <div className="w-full max-w-2xl bg-white shadow-lg rounded-xl p-6 space-y-4">
+        <p className="text-gray-700">
+          <span className="font-semibold">Checkout ID:</span> {checkout._id}
+        </p>
+        <p className="text-lg font-bold text-[#8B0000]">
+          Total: Rp {Number(checkout.total).toLocaleString()}
+        </p>
+
+        {/* Tombol bayar */}
+        <button
+          disabled={loading}
+          onClick={handlePay}
+          className={`w-full font-semibold py-3 rounded-lg transition ${
+            loading
+              ? "bg-red-300 text-white cursor-not-allowed"
+              : "bg-[#8B0000] hover:bg-red-900 text-white"
+          }`}
+        >
+          {loading ? "Membuat Invoice..." : "Bayar dengan Xendit"}
+        </button>
       </div>
-      <button disabled={loading} onClick={handlePay} className="w-full bg-blue-600 text-white px-4 py-2 rounded">
-        {loading ? 'Membuat Invoice...' : 'Bayar dengan Xendit'}
-      </button>
     </div>
   );
 }
