@@ -1,96 +1,121 @@
 // pages/checkout/index.js
-import { useState, useEffect } from "react";
-import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
+import Image from "next/image";
 
 export default function CheckoutPage() {
-  const router = useRouter();
   const [cart, setCart] = useState([]);
   const [email, setEmail] = useState("");
 
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("cart") || "[]");
-    setCart(stored);
+    const cartData = JSON.parse(localStorage.getItem("cart") || "[]");
+    setCart(cartData);
   }, []);
 
-  if (!cart) return <div className="p-6">Loading cart...</div>;
-
-  const subtotal = cart.reduce((acc, i) => acc + i.price * i.quantity, 0);
-  const tax = Math.round(subtotal * 0.1);
+  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const tax = subtotal * 0.1;
   const total = subtotal + tax;
 
   async function handleCheckout() {
-    if (cart.length === 0) return alert("Keranjang kosong");
+    if (!email) {
+      alert("Mohon isi email Anda");
+      return;
+    }
 
-    const res = await fetch("/api/checkout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items: cart, userEmail: email }),
-    });
-    const data = await res.json();
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: cart, userEmail: email }),
+      });
 
-    if (data.success) {
-      localStorage.removeItem("cart");
-      router.push(`/payment?checkoutId=${data.checkoutId}`);
-    } else {
-      alert("Gagal membuat checkout: " + (data.error || "unknown"));
+      const data = await res.json();
+      if (data.success) {
+        window.location.href = `/payment?checkoutId=${data.checkout._id}`;
+      } else {
+        alert("Gagal membuat checkout: " + data.error);
+      }
+    } catch (err) {
+      alert("Error: " + err.message);
     }
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">Checkout</h1>
+    <div className="min-h-screen bg-[#fdf6ec] flex flex-col items-center py-10 px-4">
+      {/* Header dengan logo */}
+      <header className="flex items-center justify-center gap-4">
+        <Image
+          src="/images/logo-pudinginaja.jpg" // pastikan file ada di /public/images
+          alt="pudinginaja logo"
+          width={60}
+          height={60}
+          className="rounded-full"
+        />
+        <h1 className="text-3xl font-extrabold text-[#8B0000]">
+          pudinginaja.jkt
+        </h1>
+      </header>
 
-      <div className="border rounded p-4 mb-4">
-        {cart.length === 0 ? (
-          <p>Keranjangmu kosong.</p>
-        ) : (
-          <table className="w-full">
-            <thead>
-              <tr className="border-b">
-                <th className="py-2 text-left">Produk</th>
-                <th className="py-2">Qty</th>
-                <th className="py-2">Harga</th>
-                <th className="py-2">Total</th>
+      {/* Judul Checkout di luar card */}
+      <h2 className="text-2xl font-bold text-[#8B0000] my-6 w-full max-w-3xl text-left">
+        Checkout
+      </h2>
+
+
+      <div className="w-full max-w-3xl bg-white shadow-lg rounded-xl p-6">
+        {/* Tabel produk */}
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="border-b">
+              <th className="py-2 font-semibold text-[#8B0000]">Produk</th>
+              <th className="py-2 font-semibold text-[#8B0000] text-center">Qty</th>
+              <th className="py-2 font-semibold text-[#8B0000] text-right">Harga</th>
+              <th className="py-2 font-semibold text-[#8B0000] text-right">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {cart.map((item) => (
+              <tr key={item._id} className="border-b">
+                <td className="py-3 text-gray-800">{item.name}</td>
+                <td className="py-3 text-center text-gray-800">{item.quantity}</td>
+                <td className="py-3 text-right text-gray-800">
+                  Rp {Number(item.price).toLocaleString()}
+                </td>
+                <td className="py-3 text-right text-gray-800">
+                  Rp {Number(item.price * item.quantity).toLocaleString()}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {cart.map((i) => (
-                <tr key={i._id} className="border-b">
-                  <td className="py-2">{i.name}</td>
-                  <td className="py-2 text-center">{i.quantity}</td>
-                  <td className="py-2">Rp {i.price.toLocaleString()}</td>
-                  <td className="py-2">
-                    Rp {(i.price * i.quantity).toLocaleString()}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+            ))}
+          </tbody>
+        </table>
 
+        {/* Ringkasan harga */}
         <div className="mt-4 text-right space-y-1">
-          <p>Subtotal: Rp {subtotal.toLocaleString()}</p>
-          <p>Pajak (10%): Rp {tax.toLocaleString()}</p>
-          <p className="font-bold text-lg">Total: Rp {total.toLocaleString()}</p>
+          <p className="text-gray-700">Subtotal: Rp {subtotal.toLocaleString()}</p>
+          <p className="text-gray-700">Pajak (10%): Rp {tax.toLocaleString()}</p>
+          <p className="font-bold text-lg text-[#8B0000]">
+            Total: Rp {total.toLocaleString()}
+          </p>
         </div>
-      </div>
 
-      <div className="mb-4">
+        {/* Input email */}
         <input
           type="email"
           placeholder="Email Anda"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="border px-3 py-2 rounded-lg w-full mb-3"
+          className="mt-6 w-full border border-[#8B0000] rounded-lg px-4 py-3 
+                     text-[#8B0000] placeholder-[#8B0000]/60
+                     focus:outline-none focus:ring-2 focus:ring-[#8B0000]"
         />
-      </div>
 
-      <button
-        onClick={handleCheckout}
-        className="bg-blue-600 text-white px-4 py-2 rounded w-full"
-      >
-        Buat Checkout & Bayar
-      </button>
+        {/* Tombol checkout */}
+        <button
+          onClick={handleCheckout}
+          className="mt-6 w-full bg-[#8B0000] hover:bg-red-900 text-white font-semibold py-3 rounded-lg transition"
+        >
+          Buat Checkout & Bayar
+        </button>
+      </div>
     </div>
   );
 }

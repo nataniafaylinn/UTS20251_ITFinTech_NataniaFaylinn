@@ -1,6 +1,7 @@
 // pages/select-items/index.js
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function SelectItems() {
   const [products, setProducts] = useState([]);
@@ -24,53 +25,75 @@ export default function SelectItems() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
+    <div className="min-h-screen bg-[#fdf6ec]">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Pilih Produk</h1>
-        <Link
-          href="/checkout"
-          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
-        >
-          Lihat Keranjang
-        </Link>
-      </div>
+      <header className="flex items-center justify-center gap-4 py-6">
+        <Image
+          src="/images/logo-pudinginaja.jpg" // taruh logo di /public/images/
+          alt="pudinginaja logo"
+          width={60}
+          height={60}
+          className="rounded-full"
+        />
+        <h1 className="text-3xl font-extrabold text-[#8B0000]">
+          pudinginaja.jkt
+        </h1>
+      </header>
 
-      {/* Produk list */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <main className="max-w-6xl mx-auto px-6 pb-12">
+        <h2 className="text-2xl font-bold text-[#8B0000] mb-6">
+          Pilih Produk
+        </h2>
+
+        {/* Grid produk */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
         {products.map((p) => (
-          <div key={p._id} className="border rounded-lg p-4 shadow-sm">
-            <div className="h-40 bg-gray-100 rounded flex items-center justify-center">
-              {p.image ? (
-                <img src={p.image} alt={p.name} className="max-h-full" />
-              ) : (
-                <span className="text-gray-400">No Image</span>
-              )}
+            <div
+            key={p._id}
+            className="bg-white border border-red-100 rounded-xl shadow-md hover:shadow-lg transition p-4 flex flex-col"
+            >
+            {/* Gambar dengan rasio 3:4 + max height */}
+            <div className="w-full aspect-[3/4] max-h-64 bg-[#fff6f6] rounded-lg overflow-hidden">
+                {p.image ? (
+                <img
+                    src={p.image}
+                    alt={p.name}
+                    className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                />
+                ) : (
+                <span className="flex items-center justify-center w-full h-full text-gray-400">
+                    No Image
+                </span>
+                )}
             </div>
-            <h3 className="mt-3 font-semibold">{p.name}</h3>
-            <p className="text-sm text-gray-600">{p.category}</p>
-            <p className="mt-2 font-bold">Rp {Number(p.price).toLocaleString()}</p>
-            <div className="mt-3">
-              <button
-                onClick={() => addToCart(p)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded w-full"
-              >
-                Tambah ke Keranjang
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
 
-      {/* Tombol checkout di bawah */}
-      <div className="mt-6 text-right">
-        <Link
-          href="/checkout"
-          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
-        >
-          Lanjut ke Checkout →
-        </Link>
-      </div>
+            <h3 className="mt-4 font-semibold text-lg text-[#8B0000]">{p.name}</h3>
+            <p className="text-sm text-gray-500">{p.category}</p>
+            <p className="mt-2 font-bold text-gray-800">
+                Rp {Number(p.price).toLocaleString()}
+            </p>
+
+            <button
+                onClick={() => addToCart(p)}
+                className="mt-auto bg-[#8B0000] hover:bg-red-900 text-white font-medium px-4 py-2 rounded-lg transition"
+            >
+                Tambah ke Keranjang
+            </button>
+            </div>
+        ))}
+        </div>
+
+
+        {/* Checkout button */}
+        <div className="mt-10 text-center">
+          <Link
+            href="/checkout"
+            className="bg-[#8B0000] hover:bg-red-900 text-white px-6 py-3 rounded-lg font-semibold text-lg shadow-md"
+          >
+            Lanjut ke Checkout →
+          </Link>
+        </div>
+      </main>
     </div>
   );
 }
