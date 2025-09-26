@@ -1,4 +1,4 @@
-import dbConnect from '@/lib/dbConnect'
+import dbConnect from '@/lib/mongoose'
 import Product from '@/models/Product'
 
 export default async function handler(req, res) {
