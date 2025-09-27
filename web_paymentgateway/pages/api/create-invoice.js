@@ -27,7 +27,8 @@ export default async function handler(req, res) {
       amount: checkout.total,
       payer_email: checkout.userEmail || "",
       description: `Pembayaran checkout ${checkout._id}`,
-      success_redirect_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment?checkoutId=${checkout._id}`,
+      success_redirect_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment-success`,
+      failure_redirect_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment-failed`,
     };
 
     // 🔑 API Key
