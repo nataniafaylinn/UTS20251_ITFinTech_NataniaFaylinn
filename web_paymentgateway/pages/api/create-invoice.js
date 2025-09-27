@@ -21,17 +21,22 @@ export default async function handler(req, res) {
       return res.status(404).json({ success: false, error: "Checkout not found" });
     }
 
+    const payerEmail = checkout.userEmail && checkout.userEmail.includes("@")
+      ? checkout.userEmail
+      : "test@example.com";
+
     // Body invoice untuk Xendit
     const body = {
       external_id: `checkout-${checkout._id}-${Date.now()}`,
-      amount: checkout.total,
-      payer_email: checkout.userEmail || "",
+      amount: Number(checkout.total), // pastikan integer
+      payer_email: payerEmail,
       description: `Pembayaran checkout ${checkout._id}`,
       success_redirect_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment?checkoutId=${checkout._id}`,
+      currency: "IDR",
     };
 
     // 🔑 Pakai SECRET API KEY (dari .env.local)
-    const auth = Buffer.from(`${process.env.XENDIT_SECRET_API_KEY}:`).toString("base64");
+    const auth = Buffer.from(`${process.env.XENDIT_SECRET_KEY}:`).toString("base64");
 
     const resp = await fetch("https://api.xendit.co/v2/invoices", {
       method: "POST",
@@ -45,6 +50,7 @@ export default async function handler(req, res) {
     const data = await resp.json();
 
     if (resp.status >= 400) {
+      console.error("Xendit API error:", data);
       return res.status(resp.status).json({ success: false, error: data });
     }
 
@@ -70,6 +76,7 @@ export default async function handler(req, res) {
       paymentId: payment._id,
     });
   } catch (err) {
+    console.error("create-invoice error:", err);
     return res.status(500).json({ success: false, error: err.message });
   }
 }
