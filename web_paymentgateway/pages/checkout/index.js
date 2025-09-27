@@ -58,7 +58,8 @@ export default function CheckoutPage() {
 
       const data = await res.json();
       if (data.success) {
-        window.location.href = `/payment?checkoutId=${data.checkout._id}`;
+        // ✅ gunakan checkoutId dari API
+        window.location.href = `/payment?checkoutId=${data.checkoutId}`;
       } else {
         alert("Gagal membuat checkout: " + data.error);
       }
@@ -112,7 +113,9 @@ export default function CheckoutPage() {
                     >
                       -
                     </button>
-                    <span className="min-w-[20px]">{item.quantity}</span>
+                    <span className="min-w-[20px] text-gray-800 font-medium">
+                      {item.quantity}
+                    </span>
                     <button
                       onClick={() => handleQtyChange(item._id, "plus")}
                       className="px-2 py-1 bg-[#8B0000] text-white rounded-md hover:bg-red-900"
