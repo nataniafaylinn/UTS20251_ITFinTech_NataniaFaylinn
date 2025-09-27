@@ -10,11 +10,18 @@ export default function PaymentPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!checkoutId) return;
+    if (!checkoutId) return; // tunggu checkoutId ada
     fetch(`/api/checkout/${checkoutId}`)
       .then((r) => r.json())
       .then((d) => {
-        if (d.success) setCheckout(d.checkout);
+        if (d.success) {
+          setCheckout(d.checkout);
+        } else {
+          console.error("Checkout fetch error:", d.error);
+        }
+      })
+      .catch((err) => {
+        console.error("Fetch error:", err);
       });
   }, [checkoutId]);
 
@@ -34,6 +41,7 @@ export default function PaymentPage() {
     }
   }
 
+  // Kalau masih loading atau checkout null → tampilkan pesan
   if (!checkout) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#fdf6ec]">
@@ -42,12 +50,12 @@ export default function PaymentPage() {
     );
   }
 
+  // ✅ aman render karena checkout udah ada
   return (
     <div className="min-h-screen bg-[#fdf6ec] flex flex-col items-center py-10 px-4">
-      {/* Header */}
       <header className="flex items-center justify-center gap-4">
         <Image
-          src="/images/logo-pudinginaja.jpg" // pastikan logo ada di /public/images
+          src="/images/logo-pudinginaja.jpg"
           alt="pudinginaja logo"
           width={60}
           height={60}
@@ -56,12 +64,10 @@ export default function PaymentPage() {
         <h1 className="text-3xl font-extrabold text-[#8B0000]">pudinginaja.jkt</h1>
       </header>
 
-      {/* Judul */}
       <h2 className="text-2xl font-bold text-[#8B0000] my-6 w-full max-w-2xl text-left">
         Pembayaran
       </h2>
 
-      {/* Card Ringkasan */}
       <div className="w-full max-w-2xl bg-white shadow-lg rounded-xl p-6 space-y-4">
         <p className="text-gray-700">
           <span className="font-semibold">Checkout ID:</span> {checkout._id}
@@ -70,7 +76,6 @@ export default function PaymentPage() {
           Total: Rp {Number(checkout.total).toLocaleString()}
         </p>
 
-        {/* Tombol bayar */}
         <button
           disabled={loading}
           onClick={handlePay}
