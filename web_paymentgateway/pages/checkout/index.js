@@ -11,6 +11,34 @@ export default function CheckoutPage() {
     setCart(cartData);
   }, []);
 
+  // fungsi update qty
+  const handleQtyChange = (id, type) => {
+    const updatedCart = cart.map((item) =>
+      item._id === id
+        ? {
+            ...item,
+            quantity:
+              type === "plus"
+                ? item.quantity + 1
+                : item.quantity > 1
+                ? item.quantity - 1
+                : 1, // minimal 1
+          }
+        : item
+    );
+    setCart(updatedCart);
+    localStorage.setItem("cart", JSON.stringify(updatedCart));
+  };
+
+  // fungsi hapus item
+  const handleRemoveItem = (id) => {
+    if (confirm("Apakah Anda yakin ingin membatalkan pembelian produk ini?")) {
+      const updatedCart = cart.filter((item) => item._id !== id);
+      setCart(updatedCart);
+      localStorage.setItem("cart", JSON.stringify(updatedCart));
+    }
+  };
+
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const tax = subtotal * 0.1;
   const total = subtotal + tax;
@@ -69,18 +97,43 @@ export default function CheckoutPage() {
               <th className="py-2 font-semibold text-[#8B0000] text-center">Qty</th>
               <th className="py-2 font-semibold text-[#8B0000] text-right">Harga</th>
               <th className="py-2 font-semibold text-[#8B0000] text-right">Total</th>
+              <th className="py-2 font-semibold text-[#8B0000] text-center">Aksi</th>
             </tr>
           </thead>
           <tbody>
             {cart.map((item) => (
               <tr key={item._id} className="border-b">
                 <td className="py-3 text-gray-800">{item.name}</td>
-                <td className="py-3 text-center text-gray-800">{item.quantity}</td>
+                <td className="py-3 text-center text-gray-800">
+                  <div className="flex items-center justify-center gap-2">
+                    <button
+                      onClick={() => handleQtyChange(item._id, "minus")}
+                      className="px-2 py-1 bg-[#8B0000] text-white rounded-md hover:bg-red-900"
+                    >
+                      -
+                    </button>
+                    <span className="min-w-[20px]">{item.quantity}</span>
+                    <button
+                      onClick={() => handleQtyChange(item._id, "plus")}
+                      className="px-2 py-1 bg-[#8B0000] text-white rounded-md hover:bg-red-900"
+                    >
+                      +
+                    </button>
+                  </div>
+                </td>
                 <td className="py-3 text-right text-gray-800">
                   Rp {Number(item.price).toLocaleString()}
                 </td>
                 <td className="py-3 text-right text-gray-800">
-                  Rp {Number(item.price * item.quantity).toLocaleString()}
+                  Rp {(item.price * item.quantity).toLocaleString()}
+                </td>
+                <td className="py-3 text-center">
+                  <button
+                    onClick={() => handleRemoveItem(item._id)}
+                    className="px-3 py-1 bg-gray-200 text-red-600 rounded-md hover:bg-red-100"
+                  >
+                    🗑️
+                  </button>
                 </td>
               </tr>
             ))}
@@ -89,8 +142,12 @@ export default function CheckoutPage() {
 
         {/* Ringkasan harga */}
         <div className="mt-4 text-right space-y-1">
-          <p className="text-gray-700">Subtotal: Rp {subtotal.toLocaleString()}</p>
-          <p className="text-gray-700">Pajak (10%): Rp {tax.toLocaleString()}</p>
+          <p className="text-gray-700">
+            Subtotal: Rp {subtotal.toLocaleString()}
+          </p>
+          <p className="text-gray-700">
+            Pajak (10%): Rp {tax.toLocaleString()}
+          </p>
           <p className="font-bold text-lg text-[#8B0000]">
             Total: Rp {total.toLocaleString()}
           </p>
