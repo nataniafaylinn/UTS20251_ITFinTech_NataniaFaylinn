@@ -11,7 +11,6 @@ export default function CheckoutPage() {
     setCart(cartData);
   }, []);
 
-  // fungsi update qty
   const handleQtyChange = (id, type) => {
     const updatedCart = cart.map((item) =>
       item._id === id
@@ -22,7 +21,7 @@ export default function CheckoutPage() {
                 ? item.quantity + 1
                 : item.quantity > 1
                 ? item.quantity - 1
-                : 1, // minimal 1
+                : 1,
           }
         : item
     );
@@ -30,9 +29,8 @@ export default function CheckoutPage() {
     localStorage.setItem("cart", JSON.stringify(updatedCart));
   };
 
-  // fungsi hapus item
   const handleRemoveItem = (id) => {
-    if (confirm("Apakah Anda yakin ingin membatalkan pembelian produk ini?")) {
+    if (confirm("Apakah Anda yakin ingin membatalkan produk ini?")) {
       const updatedCart = cart.filter((item) => item._id !== id);
       setCart(updatedCart);
       localStorage.setItem("cart", JSON.stringify(updatedCart));
@@ -57,8 +55,10 @@ export default function CheckoutPage() {
       });
 
       const data = await res.json();
+      console.log("📦 Checkout response:", data);
+
       if (data.success) {
-        // ✅ gunakan checkoutId dari API
+        // 🔥 gunakan checkoutId, bukan checkout._id
         window.location.href = `/payment?checkoutId=${data.checkoutId}`;
       } else {
         alert("Gagal membuat checkout: " + data.error);
@@ -70,10 +70,9 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-[#fdf6ec] flex flex-col items-center py-10 px-4">
-      {/* Header dengan logo */}
       <header className="flex items-center justify-center gap-4">
         <Image
-          src="/images/logo-pudinginaja.jpg" // pastikan file ada di /public/images
+          src="/images/logo-pudinginaja.jpg"
           alt="pudinginaja logo"
           width={60}
           height={60}
@@ -84,13 +83,11 @@ export default function CheckoutPage() {
         </h1>
       </header>
 
-      {/* Judul Checkout di luar card */}
       <h2 className="text-2xl font-bold text-[#8B0000] my-6 w-full max-w-3xl text-left">
         Checkout
       </h2>
 
       <div className="w-full max-w-3xl bg-white shadow-lg rounded-xl p-6">
-        {/* Tabel produk */}
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b">
@@ -113,9 +110,7 @@ export default function CheckoutPage() {
                     >
                       -
                     </button>
-                    <span className="min-w-[20px] text-gray-800 font-medium">
-                      {item.quantity}
-                    </span>
+                    <span className="min-w-[20px]">{item.quantity}</span>
                     <button
                       onClick={() => handleQtyChange(item._id, "plus")}
                       className="px-2 py-1 bg-[#8B0000] text-white rounded-md hover:bg-red-900"
@@ -143,7 +138,6 @@ export default function CheckoutPage() {
           </tbody>
         </table>
 
-        {/* Ringkasan harga */}
         <div className="mt-4 text-right space-y-1">
           <p className="text-gray-700">
             Subtotal: Rp {subtotal.toLocaleString()}
@@ -156,7 +150,6 @@ export default function CheckoutPage() {
           </p>
         </div>
 
-        {/* Input email */}
         <input
           type="email"
           placeholder="Email Anda"
@@ -167,7 +160,6 @@ export default function CheckoutPage() {
                      focus:outline-none focus:ring-2 focus:ring-[#8B0000]"
         />
 
-        {/* Tombol checkout */}
         <button
           onClick={handleCheckout}
           className="mt-6 w-full bg-[#8B0000] hover:bg-red-900 text-white font-semibold py-3 rounded-lg transition"

@@ -33,9 +33,11 @@ export default async function handler(req, res) {
         userEmail,
       });
 
+      console.log("✅ Checkout dibuat:", checkout._id);
+
       return res.status(201).json({
         success: true,
-        checkoutId: checkout._id.toString(), // 🔥 pastikan ini ada
+        checkoutId: checkout._id.toString(), // cuma kirim ID
       });
     } catch (err) {
       console.error("Checkout POST error:", err);
