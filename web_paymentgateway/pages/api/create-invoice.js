@@ -57,6 +57,9 @@ export default async function handler(req, res) {
       return res.status(resp.status).json({ success: false, error: data });
     }
 
+    // 🔍 log sebelum simpan Payment
+    console.log("🛠 Simpan Payment untuk checkout:", checkout._id);
+
     // Simpan Payment ke DB
     const payment = await Payment.create({
       checkout: checkout._id,
@@ -68,9 +71,13 @@ export default async function handler(req, res) {
       meta: data,
     });
 
+    // 🔍 log setelah Payment tersimpan
+    console.log("✅ Payment tersimpan:", payment._id);
+
     // Update status checkout
     checkout.status = "PENDING_PAYMENT";
     await checkout.save();
+    console.log("🔄 Checkout updated jadi PENDING_PAYMENT:", checkout._id);
 
     return res.status(201).json({
       success: true,
