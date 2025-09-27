@@ -1,6 +1,7 @@
 // pages/api/checkout/[id].js
 import dbConnect from "@/lib/mongoose";
 import Checkout from "@/models/Checkout";
+import Product from "@/models/Product";
 
 export default async function handler(req, res) {
   await dbConnect();
