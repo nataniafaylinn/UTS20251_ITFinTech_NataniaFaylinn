@@ -1,10 +1,21 @@
 // pages/select-items/index.js
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/router";
 
 export default function SelectItems() {
   const [products, setProducts] = useState([]);
+  const router = useRouter();
+
+  // Cek login
+  useEffect(() => {
+    const loggedIn = localStorage.getItem("loggedIn");
+    if (!loggedIn) {
+      router.replace("/login");
+    }
+  }, [router]);
 
   useEffect(() => {
     fetch("/api/products")
@@ -29,7 +40,7 @@ export default function SelectItems() {
       {/* Header */}
       <header className="flex items-center justify-center gap-4 py-6">
         <Image
-          src="/images/logo-pudinginaja.jpg" // taruh logo di /public/images/
+          src="/images/logo-pudinginaja.jpg"
           alt="pudinginaja logo"
           width={60}
           height={60}
@@ -47,42 +58,40 @@ export default function SelectItems() {
 
         {/* Grid produk */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-        {products.map((p) => (
+          {products.map((p) => (
             <div
-            key={p._id}
-            className="bg-white border border-red-100 rounded-xl shadow-md hover:shadow-lg transition p-4 flex flex-col"
+              key={p._id}
+              className="bg-white border border-red-100 rounded-xl shadow-md hover:shadow-lg transition p-4 flex flex-col"
             >
-            {/* Gambar dengan rasio 3:4 + max height */}
-            <div className="w-full aspect-[3/4] max-h-64 bg-[#fff6f6] rounded-lg overflow-hidden">
+              <div className="w-full aspect-[3/4] max-h-64 bg-[#fff6f6] rounded-lg overflow-hidden">
                 {p.image ? (
-                <img
+                  <img
                     src={p.image}
                     alt={p.name}
                     className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-                />
+                  />
                 ) : (
-                <span className="flex items-center justify-center w-full h-full text-gray-400">
+                  <span className="flex items-center justify-center w-full h-full text-gray-400">
                     No Image
-                </span>
+                  </span>
                 )}
-            </div>
+              </div>
 
-            <h3 className="mt-4 font-semibold text-lg text-[#8B0000]">{p.name}</h3>
-            <p className="text-sm text-gray-500">{p.category}</p>
-            <p className="mt-2 font-bold text-gray-800">
+              <h3 className="mt-4 font-semibold text-lg text-[#8B0000]">{p.name}</h3>
+              <p className="text-sm text-gray-500">{p.category}</p>
+              <p className="mt-2 font-bold text-gray-800">
                 Rp {Number(p.price).toLocaleString()}
-            </p>
+              </p>
 
-            <button
+              <button
                 onClick={() => addToCart(p)}
                 className="mt-auto bg-[#8B0000] hover:bg-red-900 text-white font-medium px-4 py-2 rounded-lg transition"
-            >
+              >
                 Tambah ke Keranjang
-            </button>
+              </button>
             </div>
-        ))}
+          ))}
         </div>
-
 
         {/* Checkout button */}
         <div className="mt-10 text-center">
