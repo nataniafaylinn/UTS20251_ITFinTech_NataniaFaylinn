@@ -84,10 +84,10 @@ export default function Register() {
         </form>
 
         <p className="text-sm text-center mt-4 text-gray-700">
-          Sudah punya akun?{" "}
-          <a href="/login" className="text-[#8B0000] hover:underline font-semibold">
-            Masuk di sini
-          </a>
+            Sudah punya akun?{" "}
+            <Link href="/login" className="text-[#8B0000] hover:underline font-semibold">
+                Masuk di sini
+            </Link>
         </p>
       </div>
     </div>

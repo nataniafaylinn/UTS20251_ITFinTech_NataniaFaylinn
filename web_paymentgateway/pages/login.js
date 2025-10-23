@@ -73,10 +73,10 @@ export default function Login() {
         </form>
 
         <p className="text-sm text-center mt-4 text-gray-700">
-          Belum punya akun?{" "}
-          <a href="/register" className="text-[#8B0000] hover:underline font-semibold">
-            Daftar di sini
-          </a>
+            Belum punya akun?{" "}
+            <Link href="/register" className="text-[#8B0000] hover:underline font-semibold">
+                Daftar di sini
+            </Link>
         </p>
       </div>
     </div>
