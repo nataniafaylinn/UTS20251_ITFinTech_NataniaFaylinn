@@ -1,83 +1,43 @@
-// pages/api/create-invoice.js
-import dbConnect from "@/lib/mongoose";
-import Checkout from "@/models/Checkout";
-import Payment from "@/models/Payment";
+// pages/payment-success.js
+import Image from "next/image";
+import Link from "next/link";
 
-export default async function handler(req, res) {
-  await dbConnect();
+export default function PaymentSuccess() {
+  return (
+    <div className="min-h-screen bg-[#fdf6ec] flex flex-col items-center justify-center px-4">
+      {/* Header */}
+      <header className="flex items-center justify-center gap-4 mb-8">
+        <Image
+          src="/images/logo-pudinginaja.jpg"
+          alt="pudinginaja logo"
+          width={60}
+          height={60}
+          className="rounded-full"
+        />
+        <h1 className="text-3xl font-extrabold text-[#8B0000]">
+          pudinginaja.jkt
+        </h1>
+      </header>
 
-  if (req.method !== "POST") {
-    return res.status(405).json({ success: false, error: "Method not allowed" });
-  }
+      {/* Card sukses */}
+      <div className="bg-white shadow-lg rounded-xl p-8 max-w-md w-full text-center">
+        <h2 className="text-2xl font-bold text-[#8B0000] mb-4">
+          🎉 Pembayaran Berhasil!
+        </h2>
+        <p className="text-gray-700 mb-6">
+          Terima kasih, pembayaran Anda sudah kami terima. Pesanan Anda sedang
+          diproses.
+        </p>
 
-  const { checkoutId } = req.body;
-  if (!checkoutId) {
-    return res.status(400).json({ success: false, error: "checkoutId required" });
-  }
-
-  try {
-    const checkout = await Checkout.findById(checkoutId);
-    if (!checkout) {
-      return res.status(404).json({ success: false, error: "Checkout not found" });
-    }
-
-    // Body invoice untuk Xendit
-    const body = {
-      external_id: `checkout-${checkout._id}-${Date.now()}`,
-      amount: checkout.total,
-      payer_email: checkout.userEmail || "",
-      description: `Pembayaran checkout ${checkout._id}`,
-      // ✅ Redirect ke halaman sukses kita
-      success_redirect_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment-success`,
-    };
-
-    const secretKey = process.env.XENDIT_SECRET_API_KEY;
-    if (!secretKey) {
-      console.error("❌ XENDIT_SECRET_API_KEY belum di-set di env");
-      return res.status(500).json({ success: false, error: "API key missing" });
-    }
-
-    const auth = Buffer.from(`${secretKey}:`).toString("base64");
-
-    console.log("📡 Mengirim invoice ke Xendit:", body);
-
-    const resp = await fetch("https://api.xendit.co/v2/invoices", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Basic ${auth}`,
-      },
-      body: JSON.stringify(body),
-    });
-
-    const data = await resp.json();
-    console.log("📥 Response dari Xendit:", resp.status, data);
-
-    if (!resp.ok) {
-      return res.status(resp.status).json({ success: false, error: data });
-    }
-
-    const payment = await Payment.create({
-      checkout: checkout._id,
-      amount: checkout.total,
-      currency: "IDR",
-      status: data.status || "PENDING",
-      xenditInvoiceId: data.id || data.invoice_id || null,
-      paymentUrl: data.invoice_url || null,
-      meta: data,
-    });
-
-    checkout.status = "PENDING_PAYMENT";
-    await checkout.save();
-
-    return res.status(201).json({
-      success: true,
-      invoiceUrl: payment.paymentUrl,
-      raw: data,
-      paymentId: payment._id,
-    });
-  } catch (err) {
-    console.error("❌ Error create-invoice:", err);
-    return res.status(500).json({ success: false, error: err.message });
-  }
+        <div className="flex flex-col gap-3">
+          <Link
+            href="/"
+            className="bg-[#8B0000] hover:bg-red-900 text-white py-3 px-4 rounded-lg font-semibold transition"
+          >
+            Kembali ke Beranda
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
 }
