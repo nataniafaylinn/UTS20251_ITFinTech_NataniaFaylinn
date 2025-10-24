@@ -1,10 +1,11 @@
-// pages/register.js
+// /pages/register.js
 import { useState } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Register() {
-  const [form, setForm] = useState({ name: "", email: "", password: "", phone: "" });
+  const [form, setForm] = useState({ name: "", phone: "", password: "" });
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -14,11 +15,30 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
     try {
-      // Simulasi kirim data registrasi ke backend
+      // ✅ Panggil endpoint register untuk buat user baru di MongoDB
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+
+      const data = await res.json();
+
+      if (!data.success) {
+        alert(data.error || "Gagal mendaftar.");
+        return;
+      }
+
+      // ✅ Simpan data user sementara ke localStorage
       localStorage.setItem("pendingUser", JSON.stringify(form));
-      alert("Kode OTP telah dikirim ke WhatsApp Anda!");
+
+      alert("Kode OTP telah dikirim ke WhatsApp kamu.");
       router.push("/verify-otp");
+    } catch (err) {
+      console.error("❌ Register error:", err);
+      alert("Terjadi kesalahan. Silakan coba lagi.");
     } finally {
       setLoading(false);
     }
@@ -52,17 +72,9 @@ export default function Register() {
             required
           />
           <input
-            name="email"
-            type="email"
-            placeholder="Email"
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#8B0000]"
-            onChange={handleChange}
-            required
-          />
-          <input
             name="phone"
             type="text"
-            placeholder="Nomor WhatsApp (misal: 628123456789)"
+            placeholder="Nomor WhatsApp (misal: +628123456789)"
             className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#8B0000]"
             onChange={handleChange}
             required
@@ -79,15 +91,18 @@ export default function Register() {
             disabled={loading}
             className="w-full bg-[#8B0000] text-white p-3 rounded-md hover:bg-red-900 transition font-semibold"
           >
-            {loading ? "Mendaftarkan..." : "Daftar"}
+            {loading ? "Mengirim OTP..." : "Daftar"}
           </button>
         </form>
 
         <p className="text-sm text-center mt-4 text-gray-700">
-            Sudah punya akun?{" "}
-            <Link href="/login" className="text-[#8B0000] hover:underline font-semibold">
-                Masuk di sini
-            </Link>
+          Sudah punya akun?{" "}
+          <Link
+            href="/login"
+            className="text-[#8B0000] hover:underline font-semibold"
+          >
+            Masuk di sini
+          </Link>
         </p>
       </div>
     </div>

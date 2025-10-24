@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });

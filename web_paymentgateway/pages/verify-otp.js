@@ -1,4 +1,4 @@
-// pages/verify-otp.js
+// /pages/verify-otp.js
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
@@ -6,32 +6,54 @@ import Image from "next/image";
 export default function VerifyOTP() {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState(null);
+  const [userData, setUserData] = useState(null);
   const router = useRouter();
 
+  // Ambil data user yang pending dari localStorage
   useEffect(() => {
-    const stored = localStorage.getItem("pendingUser");
-    if (!stored) {
+    const pending = localStorage.getItem("pendingUser");
+    if (!pending) {
       router.replace("/register");
     } else {
-      setUser(JSON.parse(stored));
+      setUserData(JSON.parse(pending));
     }
   }, [router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    if (!userData) return;
 
+    setLoading(true);
     try {
-      // Simulasi verifikasi OTP
-      if (otp === "123456") {
-        localStorage.removeItem("pendingUser");
-        localStorage.setItem("loggedIn", "true");
-        alert("Verifikasi berhasil! Akun Anda telah aktif.");
-        router.push("/select-items");
-      } else {
-        alert("Kode OTP salah. Silakan coba lagi.");
+      console.log("📤 Mengirim verifikasi:", {
+        phone: userData.phone,
+        otpInput: otp,
+      });
+
+      const res = await fetch("/api/auth/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: userData.phone, // kirim hanya phone
+          otpInput: otp,         // dan otpInput
+        }),
+      });
+
+      const data = await res.json();
+      console.log("📥 Respons dari server:", data);
+
+      if (!data.success) {
+        alert(data.error || "Kode OTP salah.");
+        return;
       }
+
+      // Hapus pending data & arahkan ke login
+      localStorage.removeItem("pendingUser");
+      alert("Akun berhasil diverifikasi! 🎉");
+      router.push("/login");
+    } catch (err) {
+      console.error("❌ Verify error:", err);
+      alert("Terjadi kesalahan. Coba lagi nanti.");
     } finally {
       setLoading(false);
     }
@@ -40,7 +62,6 @@ export default function VerifyOTP() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#fdf6ec] px-4">
       <div className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-md border-t-8 border-[#8B0000]">
-        {/* Logo */}
         <div className="flex justify-center mb-4">
           <Image
             src="/images/logo-pudinginaja.jpg"
@@ -68,6 +89,7 @@ export default function VerifyOTP() {
             maxLength={6}
             required
           />
+
           <button
             disabled={loading}
             className="w-full bg-[#8B0000] text-white p-3 rounded-md hover:bg-red-900 transition font-semibold"
@@ -75,16 +97,6 @@ export default function VerifyOTP() {
             {loading ? "Memverifikasi..." : "Verifikasi Sekarang"}
           </button>
         </form>
-
-        <p className="text-sm text-center mt-4 text-gray-700">
-          Tidak menerima kode?{" "}
-          <button
-            className="text-[#8B0000] font-semibold hover:underline"
-            onClick={() => alert("Kode OTP baru telah dikirim!")}
-          >
-            Kirim Ulang
-          </button>
-        </p>
       </div>
     </div>
   );

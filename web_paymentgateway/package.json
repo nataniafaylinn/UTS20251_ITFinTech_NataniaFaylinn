@@ -9,12 +9,14 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.2",
     "dotenv": "^17.2.2",
     "mongodb": "^6.20.0",
     "mongoose": "^8.18.2",
     "next": "^15.5.4",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "twilio": "^5.10.3"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
