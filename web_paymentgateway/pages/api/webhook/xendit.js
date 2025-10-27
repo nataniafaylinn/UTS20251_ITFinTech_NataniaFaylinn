@@ -1,110 +1,82 @@
-// pages/api/webhook/xendit.js
-import dbConnect from "@/lib/mongoose";
+// /pages/api/webhook/xendit.js
+import dbConnect from "@/lib/dbConnect";
 import Payment from "@/models/Payment";
 import Checkout from "@/models/Checkout";
-
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+import Order from "@/models/Order";
 
 export default async function handler(req, res) {
+  await dbConnect();
+
+  // Xendit hanya mengirim POST webhook
   if (req.method !== "POST") {
-    return res.status(405).json({ success: false, error: "Method not allowed" });
+    return res.status(405).json({ success: false, message: "Method not allowed" });
   }
 
   try {
-    await dbConnect();
+    console.log("📬 Webhook diterima:", req.body);
 
-    // Verifikasi token callback
+    // Validasi token callback (wajib)
     const token = req.headers["x-callback-token"];
-    console.log("🔐 Token diterima:", token);
-    console.log("🔐 Token expected:", process.env.XENDIT_CALLBACK_TOKEN);
-    
     if (token !== process.env.XENDIT_CALLBACK_TOKEN) {
-      console.warn("⚠️ Callback token tidak valid!");
-      return res.status(403).json({ success: false, error: "Invalid callback token" });
+      console.log("❌ Token callback salah:", token);
+      return res.status(403).json({ success: false, message: "Invalid callback token" });
     }
 
-    // Baca raw body
-    let rawBody = "";
-    await new Promise((resolve) => {
-      req.on("data", (chunk) => (rawBody += chunk));
-      req.on("end", resolve);
-    });
+    const body = req.body;
 
-    console.log("📥 Webhook raw body:", rawBody);
+    // Hanya proses kalau status = PAID
+    if (body.status !== "PAID") {
+      console.log("ℹ️ Status bukan PAID, abaikan webhook.");
+      return res.status(200).json({ success: true });
+    }
 
-    const event = JSON.parse(rawBody);
-    console.log("📦 Event parsed:", {
-      id: event.id,
-      status: event.status,
-      external_id: event.external_id,
-      amount: event.amount
-    });
+    // Update Payment
+    const payment = await Payment.findOneAndUpdate(
+      { xenditInvoiceId: body.id },
+      { status: "PAID" },
+      { new: true }
+    ).populate("checkout");
 
-    // Cari payment berdasarkan xenditInvoiceId
-    const payment = await Payment.findOne({ xenditInvoiceId: event.id });
-    
     if (!payment) {
-      console.error("❌ Payment tidak ditemukan untuk invoiceId:", event.id);
-      console.log("🔍 Mencoba cari semua payments...");
-      const allPayments = await Payment.find({}).select('xenditInvoiceId checkout status').limit(5);
-      console.log("📋 Sample payments di DB:", allPayments);
-      return res.status(404).json({ success: false, error: "Payment not found" });
+      console.log("❌ Payment tidak ditemukan untuk invoice ID:", body.id);
+      return res.status(404).json({ success: false });
     }
 
-    console.log("✅ Payment ditemukan:", {
-      paymentId: payment._id,
-      currentStatus: payment.status,
-      checkoutId: payment.checkout
-    });
-
-    // Update payment status - pastikan uppercase
-    const newStatus = event.status.toUpperCase();
-    payment.status = newStatus;
-    payment.meta = event;
-    payment.updatedAt = new Date();
-    await payment.save();
-    
-    console.log("💾 Payment status updated to:", newStatus);
-
-    // Kalau PAID, update checkout juga
-    if (newStatus === "PAID") {
-      const checkout = await Checkout.findByIdAndUpdate(
-        payment.checkout,
-        { 
-          status: "PAID",
-          updatedAt: new Date()
-        },
-        { new: true } // return updated document
-      );
-      
-      console.log("💰 Checkout updated:", {
-        checkoutId: checkout?._id,
-        newStatus: checkout?.status
-      });
+    const checkout = payment.checkout;
+    if (!checkout) {
+      console.log("❌ Checkout tidak ditemukan untuk payment:", payment._id);
+      return res.status(404).json({ success: false });
     }
 
-    console.log("✅ Webhook processed successfully");
-
-    return res.status(200).json({ 
-      success: true, 
-      message: "Webhook processed",
-      payment: {
-        id: payment._id,
-        status: payment.status
-      }
+    // Pastikan order belum pernah dibuat sebelumnya
+    const existingOrder = await Order.findOne({
+      user: checkout.user,
+      totalAmount: checkout.total,
+      status: "paid",
     });
-    
+
+    if (existingOrder) {
+      console.log("⚠️ Order sudah ada:", existingOrder._id);
+      return res.status(200).json({ success: true });
+    }
+
+    // Buat order baru
+    const newOrder = await Order.create({
+      user: checkout.user,
+      items: checkout.items,
+      totalAmount: checkout.total,
+      status: "paid",
+    });
+
+    console.log("✅ Order berhasil dibuat:", newOrder._id);
+
+    // Update checkout jadi paid
+    checkout.status = "PAID";
+    await checkout.save();
+
+    res.status(200).json({ success: true });
   } catch (err) {
-    console.error("❌ Webhook error:", err);
-    console.error("Error stack:", err.stack);
-    return res.status(500).json({ 
-      success: false, 
-      error: err.message,
-      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
-    });
+    console.error("💥 Error di webhook:", err);
+    res.status(500).json({ success: false, error: err.message });
   }
 }

@@ -2,6 +2,7 @@
 import mongoose from 'mongoose';
 
 const CheckoutSchema = new mongoose.Schema({
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // ⬅️ Tambahkan ini!
   items: [{
     product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
     name: String,
