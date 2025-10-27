@@ -7,11 +7,21 @@ export default function OrdersList() {
   const [orders, setOrders] = useState([]);
 
   useEffect(() => {
-    fetch("/api/admin/orders")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) setOrders(data.orders);
-      });
+    async function fetchOrders() {
+      try {
+        const res = await fetch("/api/admin/checkout");
+        const data = await res.json();
+        if (data.success) {
+          setOrders(data.checkouts);
+        } else {
+          console.error("❌ Gagal ambil data checkout:", data.error);
+        }
+      } catch (err) {
+        console.error("❌ Gagal ambil data:", err);
+      }
+    }
+
+    fetchOrders();
   }, []);
 
   return (
@@ -20,7 +30,7 @@ export default function OrdersList() {
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-extrabold text-[#8B0000]">
-            🧾 Daftar Pembelian
+            Daftar Pembelian
           </h1>
           <Link
             href="/admin"
@@ -35,9 +45,9 @@ export default function OrdersList() {
           <table className="w-full border-collapse bg-[#fffdf8] shadow-sm">
             <thead className="bg-[#8B0000] text-white">
               <tr>
-                <th className="p-3 border">User</th>
+                <th className="p-3 border">Nama / No. WA</th>
                 <th className="p-3 border">Produk</th>
-                <th className="p-3 border">Total</th>
+                <th className="p-3 border">Subtotal</th>
                 <th className="p-3 border">Status</th>
                 <th className="p-3 border">Tanggal</th>
               </tr>
@@ -58,32 +68,45 @@ export default function OrdersList() {
                     key={o._id}
                     className="hover:bg-[#fdf6ec] transition border-b"
                   >
+                    {/* Nama atau No. WA */}
                     <td className="p-3 border text-gray-700 font-medium">
-                      {o.user?.name || o.user?.phone || "Guest"}
+                      {o.name || o.phone || o.userEmail || "Guest"}
                     </td>
+
+                    {/* Produk */}
                     <td className="p-3 border text-gray-700">
-                      {o.items.map((it, i) => (
+                      {o.items?.map((it, i) => (
                         <div key={i} className="text-sm">
-                          {it.product?.name} × {it.quantity}
+                          {it.name} × {it.quantity}
                         </div>
                       ))}
                     </td>
+
+                    {/* Subtotal */}
                     <td className="p-3 border font-semibold text-[#8B0000]">
-                      Rp {o.totalAmount?.toLocaleString()}
+                      Rp {o.subtotal?.toLocaleString("id-ID")}
                     </td>
+
+                    {/* Status */}
                     <td className="p-3 border">
                       <span
                         className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                          o.status === "paid"
+                          o.status === "PAID"
                             ? "bg-green-100 text-green-700"
-                            : o.status === "waiting"
+                            : o.status === "PENDING_PAYMENT"
                             ? "bg-yellow-100 text-yellow-700"
+                            : o.status === "CREATED"
+                            ? "bg-blue-100 text-blue-700"
+                            : o.status === "CANCELLED"
+                            ? "bg-red-100 text-red-700"
                             : "bg-gray-100 text-gray-600"
                         }`}
                       >
-                        {o.status || "unknown"}
+                        {o.status || "UNKNOWN"}
                       </span>
                     </td>
+
+                    {/* Tanggal */}
                     <td className="p-3 border text-gray-600">
                       {new Date(o.createdAt).toLocaleString("id-ID", {
                         day: "2-digit",
