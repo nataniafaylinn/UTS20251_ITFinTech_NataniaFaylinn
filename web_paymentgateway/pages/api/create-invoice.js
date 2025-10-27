@@ -1,4 +1,4 @@
-// pages/api/create-invoice.js
+// /pages/api/create-invoice.js
 import dbConnect from "@/lib/mongoose";
 import Checkout from "@/models/Checkout";
 import Payment from "@/models/Payment";
@@ -21,6 +21,17 @@ export default async function handler(req, res) {
       return res.status(404).json({ success: false, error: "Checkout not found" });
     }
 
+    // Jangan buat invoice kalau sudah pernah dibuat
+    const existingPayment = await Payment.findOne({ checkout: checkout._id });
+    if (existingPayment) {
+      console.log("⚠️ Payment sudah ada untuk checkout:", checkout._id);
+      return res.status(200).json({
+        success: true,
+        invoiceUrl: existingPayment.paymentUrl,
+        paymentId: existingPayment._id,
+      });
+    }
+
     // Body invoice untuk Xendit
     const body = {
       external_id: `checkout-${checkout._id}-${Date.now()}`,
@@ -28,9 +39,13 @@ export default async function handler(req, res) {
       payer_email: checkout.userEmail || "",
       description: `Pembayaran checkout ${checkout._id}`,
       success_redirect_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment-success`,
+      failure_redirect_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment-failed`,
+      customer: {
+        email: checkout.userEmail || "",
+        given_names: checkout.userEmail?.split("@")[0] || "Customer",
+      },
     };
 
-    // 🔑 API Key
     const secretKey = process.env.XENDIT_SECRET_API_KEY;
     if (!secretKey) {
       console.error("❌ XENDIT_SECRET_API_KEY belum di-set di env");
@@ -38,7 +53,6 @@ export default async function handler(req, res) {
     }
 
     const auth = Buffer.from(`${secretKey}:`).toString("base64");
-
     console.log("📡 Mengirim invoice ke Xendit:", body);
 
     const resp = await fetch("https://api.xendit.co/v2/invoices", {
@@ -57,10 +71,7 @@ export default async function handler(req, res) {
       return res.status(resp.status).json({ success: false, error: data });
     }
 
-    // 🔍 log sebelum simpan Payment
-    console.log("🛠 Simpan Payment untuk checkout:", checkout._id);
-
-    // Simpan Payment ke DB
+    // 🔍 Simpan Payment ke DB
     const payment = await Payment.create({
       checkout: checkout._id,
       amount: checkout.total,
@@ -71,7 +82,6 @@ export default async function handler(req, res) {
       meta: data,
     });
 
-    // 🔍 log setelah Payment tersimpan
     console.log("✅ Payment tersimpan:", payment._id);
 
     // Update status checkout

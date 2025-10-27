@@ -1,4 +1,4 @@
-// pages/api/checkout/index.js
+// /pages/api/checkout/index.js
 import dbConnect from "@/lib/mongoose";
 import Checkout from "@/models/Checkout";
 
@@ -7,7 +7,7 @@ export default async function handler(req, res) {
 
   if (req.method === "POST") {
     try {
-      const { items, userEmail } = req.body;
+      const { items, userEmail, userId } = req.body; // accept optional userId
       if (!items || !items.length)
         return res.status(400).json({ success: false, error: "Items required" });
 
@@ -19,6 +19,7 @@ export default async function handler(req, res) {
       const total = subtotal + tax;
 
       const checkout = await Checkout.create({
+        user: userId || null, // will be null if guest
         items: items.map((i) => ({
           product: i._id || null,
           name: i.name,
@@ -28,7 +29,7 @@ export default async function handler(req, res) {
         subtotal,
         tax,
         total,
-        status: "CREATED",
+        status: "PENDING_PAYMENT", // lebih deskriptif
         userEmail: userEmail || null,
       });
 
@@ -38,6 +39,7 @@ export default async function handler(req, res) {
         .status(201)
         .json({ success: true, checkoutId: checkout._id.toString(), checkout });
     } catch (err) {
+      console.error("❌ Error create checkout:", err);
       return res
         .status(500)
         .json({ success: false, error: err.message || "Internal Server Error" });

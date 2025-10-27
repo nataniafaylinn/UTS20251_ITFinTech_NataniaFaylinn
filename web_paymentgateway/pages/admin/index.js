@@ -1,31 +1,51 @@
-// /pages/admin/index.js
+// pages/admin/index.js
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 export default function AdminDashboard() {
   const [summary, setSummary] = useState({
     totalOrders: 0,
-    totalRevenue: 0,
     totalProducts: 0,
+    totalOmzet: 0,
   });
   const [chartData, setChartData] = useState([]);
 
   useEffect(() => {
-    async function fetchSummary() {
+    async function fetchDashboard() {
       try {
-        const res = await fetch("/api/admin/summary");
+        const res = await fetch("/api/admin/dashboard");
         const data = await res.json();
-        if (data.success) {
-          setSummary(data.summary);
-          setChartData(data.chartData);
-        }
+
+        // ✅ Update data summary & grafik sesuai struktur backend
+        setSummary({
+          totalOrders: data.totalOrders,
+          totalProducts: data.totalProducts,
+          totalOmzet: data.totalOmzet,
+        });
+
+        // Format data chart
+        const formattedChart = data.salesByDate.map((item) => ({
+          date: item._id,
+          omzet: item.totalSales,
+        }));
+
+        setChartData(formattedChart);
       } catch (err) {
-        console.error("❌ Gagal ambil data summary:", err);
+        console.error("❌ Gagal ambil data dashboard:", err);
       }
     }
-    fetchSummary();
+
+    fetchDashboard();
   }, []);
 
   return (
@@ -47,21 +67,27 @@ export default function AdminDashboard() {
         {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
           <div className="bg-[#fffdf8] p-6 rounded-xl shadow text-center border-l-4 border-[#8B0000]">
-            <h2 className="text-lg font-semibold text-gray-600 mb-2">Total Pesanan</h2>
+            <h2 className="text-lg font-semibold text-gray-600 mb-2">
+              Total Pesanan
+            </h2>
             <p className="text-3xl font-extrabold text-[#8B0000]">
               {summary.totalOrders}
             </p>
           </div>
           <div className="bg-[#fffdf8] p-6 rounded-xl shadow text-center border-l-4 border-[#8B0000]">
-            <h2 className="text-lg font-semibold text-gray-600 mb-2">Total Produk</h2>
+            <h2 className="text-lg font-semibold text-gray-600 mb-2">
+              Total Produk
+            </h2>
             <p className="text-3xl font-extrabold text-[#8B0000]">
               {summary.totalProducts}
             </p>
           </div>
           <div className="bg-[#fffdf8] p-6 rounded-xl shadow text-center border-l-4 border-[#8B0000]">
-            <h2 className="text-lg font-semibold text-gray-600 mb-2">Total Omzet</h2>
+            <h2 className="text-lg font-semibold text-gray-600 mb-2">
+              Total Omzet
+            </h2>
             <p className="text-3xl font-extrabold text-green-700">
-              Rp {summary.totalRevenue?.toLocaleString("id-ID")}
+              Rp {summary.totalOmzet.toLocaleString("id-ID")}
             </p>
           </div>
         </div>
@@ -69,7 +95,7 @@ export default function AdminDashboard() {
         {/* Chart Section */}
         <div className="bg-[#fffdf8] p-6 rounded-xl shadow mb-8">
           <h2 className="text-xl font-bold text-[#8B0000] mb-4">
-            Grafik Omzet Bulanan
+            Grafik Omzet Harian
           </h2>
           <div className="h-72">
             {chartData.length === 0 ? (
@@ -80,10 +106,12 @@ export default function AdminDashboard() {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
+                  <XAxis dataKey="date" />
                   <YAxis />
-                  <Tooltip formatter={(value) => `Rp ${value.toLocaleString()}`} />
-                  <Bar dataKey="revenue" fill="#8B0000" radius={[8, 8, 0, 0]} />
+                  <Tooltip
+                    formatter={(value) => `Rp ${value.toLocaleString("id-ID")}`}
+                  />
+                  <Bar dataKey="omzet" fill="#8B0000" radius={[8, 8, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}

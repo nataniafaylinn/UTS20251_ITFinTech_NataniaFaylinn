@@ -1,8 +1,8 @@
-// models/Checkout.js
+// /models/Checkout.js
 import mongoose from 'mongoose';
 
 const CheckoutSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // ⬅️ Tambahkan ini!
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false }, // make optional
   items: [{
     product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
     name: String,
