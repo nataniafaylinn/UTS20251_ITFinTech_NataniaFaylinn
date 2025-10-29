@@ -9,7 +9,8 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,6 +22,7 @@ export default function Login() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
+
       const data = await res.json();
 
       if (!data.success) {
@@ -28,9 +30,17 @@ export default function Login() {
         return;
       }
 
+      // Simpan user ke localStorage
       localStorage.setItem("user", JSON.stringify(data.user));
+
       alert("Login berhasil!");
-      router.push("/select-items");
+
+      // Redirect sesuai role
+      if (data.user.role === "admin") {
+        router.push("/admin");
+      } else {
+        router.push("/select-items");
+      }
     } catch (err) {
       console.error("❌ Login error:", err);
       alert("Terjadi kesalahan. Silakan coba lagi.");
@@ -83,7 +93,10 @@ export default function Login() {
 
         <p className="text-sm text-center mt-4 text-gray-700">
           Belum punya akun?{" "}
-          <Link href="/register" className="text-[#8B0000] hover:underline font-semibold">
+          <Link
+            href="/register"
+            className="text-[#8B0000] hover:underline font-semibold"
+          >
             Daftar di sini
           </Link>
         </p>

@@ -1,5 +1,5 @@
 // 📁 /models/User.js
-import mongoose from "mongoose";
+import * as mongoose from "mongoose";
 
 const UserSchema = new mongoose.Schema(
   {
@@ -9,7 +9,7 @@ const UserSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
       unique: true,
-      sparse: true, // biar boleh kosong (kalau register lama belum pakai email)
+      sparse: true,
     },
     phone: {
       type: String,
@@ -21,6 +21,11 @@ const UserSchema = new mongoose.Schema(
     otp: { type: String },
     otpExpires: { type: Date },
     verified: { type: Boolean, default: false },
+    role: {
+      type: String,
+      enum: ["user", "admin"],
+      default: "user",
+    },
   },
   { timestamps: true }
 );

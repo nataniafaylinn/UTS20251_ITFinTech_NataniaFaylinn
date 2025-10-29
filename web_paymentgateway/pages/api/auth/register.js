@@ -37,6 +37,9 @@ export default async function handler(req, res) {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpires = new Date(Date.now() + 5 * 60 * 1000);
 
+    // sebelum create user:
+    const role = email.toLowerCase().endsWith("@gmail.com") ? "user" : "admin";
+
     await User.create({
       name,
       email: email.toLowerCase(),
@@ -45,6 +48,7 @@ export default async function handler(req, res) {
       otp,
       otpExpires,
       verified: false,
+      role,
     });
 
     await sendWhatsApp(
