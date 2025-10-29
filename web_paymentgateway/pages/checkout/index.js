@@ -1,14 +1,25 @@
-// pages/checkout/index.js
+///pages/checkout/index.js
+
 import { useEffect, useState } from "react";
 import Image from "next/image";
 
 export default function CheckoutPage() {
   const [cart, setCart] = useState([]);
   const [email, setEmail] = useState("");
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     const cartData = JSON.parse(localStorage.getItem("cart") || "[]");
     setCart(cartData);
+    
+    // Ambil data user dari localStorage jika login
+    const userData = JSON.parse(localStorage.getItem("user") || "null");
+    setUser(userData);
+    
+    // Jika user login, set email dari data user
+    if (userData && userData.email) {
+      setEmail(userData.email);
+    }
   }, []);
 
   const handleQtyChange = (id, type) => {
@@ -51,14 +62,23 @@ export default function CheckoutPage() {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items: cart, userEmail: email }),
+        body: JSON.stringify({ 
+          items: cart, 
+          userEmail: email,
+          userId: user ? user._id : null // kirim userId jika login
+        }),
       });
 
       const data = await res.json();
       console.log("📦 Checkout response:", data);
 
       if (data.success) {
-        // 🔥 gunakan checkoutId, bukan checkout._id
+        // Tampilkan pesan berbeda untuk user login vs guest
+        if (user) {
+          alert("Checkout berhasil! Notifikasi telah dikirim ke WhatsApp Anda.");
+        } else {
+          alert("Checkout berhasil! Silakan lanjutkan pembayaran.");
+        }
         window.location.href = `/payment?checkoutId=${data.checkoutId}`;
       } else {
         alert("Gagal membuat checkout: " + data.error);
@@ -159,6 +179,13 @@ export default function CheckoutPage() {
                      text-[#8B0000] placeholder-[#8B0000]/60
                      focus:outline-none focus:ring-2 focus:ring-[#8B0000]"
         />
+
+        {/* Tampilkan info notifikasi untuk user login */}
+        {user && (
+          <p className="mt-2 text-sm text-green-600">
+            📱 Notifikasi akan dikirim ke WhatsApp Anda: {user.phone}
+          </p>
+        )}
 
         <button
           onClick={handleCheckout}

@@ -1,13 +1,16 @@
-// /pages/api/checkout/index.js
+///pages/api/checkout/index.js
+
 import dbConnect from "@/lib/mongoose";
 import Checkout from "@/models/Checkout";
+import User from "@/models/User";
+import { sendCheckoutNotification } from "@/lib/whatsapp";
 
 export default async function handler(req, res) {
   await dbConnect();
 
   if (req.method === "POST") {
     try {
-      const { items, userEmail, userId } = req.body; // accept optional userId
+      const { items, userEmail, userId } = req.body;
       if (!items || !items.length)
         return res.status(400).json({ success: false, error: "Items required" });
 
@@ -15,11 +18,11 @@ export default async function handler(req, res) {
         (acc, item) => acc + Number(item.price) * Number(item.quantity),
         0
       );
-      const tax = Math.round(subtotal * 0.1); // 10% pajak
+      const tax = Math.round(subtotal * 0.1);
       const total = subtotal + tax;
 
       const checkout = await Checkout.create({
-        user: userId || null, // will be null if guest
+        user: userId || null,
         items: items.map((i) => ({
           product: i._id || null,
           name: i.name,
@@ -29,11 +32,36 @@ export default async function handler(req, res) {
         subtotal,
         tax,
         total,
-        status: "PENDING_PAYMENT", // lebih deskriptif
+        status: "PENDING_PAYMENT",
         userEmail: userEmail || null,
       });
 
       console.log("✅ Checkout dibuat:", checkout._id);
+
+      // 🔥 KIRIM NOTIFIKASI WHATSAPP JIKA USER LOGIN
+      if (userId) {
+        try {
+          const user = await User.findById(userId);
+          if (user && user.phone) {
+            const notificationData = {
+              checkoutId: checkout._id.toString(),
+              items: items,
+              total: total,
+            };
+
+            const result = await sendCheckoutNotification(user.phone, notificationData);
+            
+            if (result.success) {
+              console.log('✅ Notifikasi WhatsApp checkout terkirim ke:', user.phone);
+            } else {
+              console.warn('⚠️ Gagal mengirim notifikasi WhatsApp, tetapi checkout berhasil');
+            }
+          }
+        } catch (whatsappError) {
+          console.error('❌ Error sending WhatsApp notification:', whatsappError);
+          // Jangan gagalkan checkout jika notifikasi gagal
+        }
+      }
 
       return res
         .status(201)
