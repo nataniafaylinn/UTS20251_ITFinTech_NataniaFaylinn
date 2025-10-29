@@ -1,29 +1,26 @@
-// /pages/register.js
+// 📁 /pages/register.js
 import { useState } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import Link from "next/link";
 
 export default function Register() {
-  const [form, setForm] = useState({ name: "", phone: "", password: "" });
+  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "" });
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // ✅ Panggil endpoint register untuk buat user baru di MongoDB
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-
       const data = await res.json();
 
       if (!data.success) {
@@ -31,9 +28,7 @@ export default function Register() {
         return;
       }
 
-      // ✅ Simpan data user sementara ke localStorage
       localStorage.setItem("pendingUser", JSON.stringify(form));
-
       alert("Kode OTP telah dikirim ke WhatsApp kamu.");
       router.push("/verify-otp");
     } catch (err) {
@@ -47,7 +42,6 @@ export default function Register() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#fdf6ec] px-4">
       <div className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-md border-t-8 border-[#8B0000]">
-        {/* Logo */}
         <div className="flex justify-center mb-4">
           <Image
             src="/images/logo-pudinginaja.jpg"
@@ -67,25 +61,33 @@ export default function Register() {
             name="name"
             type="text"
             placeholder="Nama Lengkap"
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#8B0000]"
             onChange={handleChange}
             required
+            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#8B0000]"
+          />
+          <input
+            name="email"
+            type="email"
+            placeholder="Email"
+            onChange={handleChange}
+            required
+            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#8B0000]"
           />
           <input
             name="phone"
             type="text"
             placeholder="Nomor WhatsApp (misal: +628123456789)"
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#8B0000]"
             onChange={handleChange}
             required
+            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#8B0000]"
           />
           <input
             name="password"
             type="password"
             placeholder="Password"
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#8B0000]"
             onChange={handleChange}
             required
+            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#8B0000]"
           />
           <button
             disabled={loading}
@@ -97,10 +99,7 @@ export default function Register() {
 
         <p className="text-sm text-center mt-4 text-gray-700">
           Sudah punya akun?{" "}
-          <Link
-            href="/login"
-            className="text-[#8B0000] hover:underline font-semibold"
-          >
+          <Link href="/login" className="text-[#8B0000] hover:underline font-semibold">
             Masuk di sini
           </Link>
         </p>

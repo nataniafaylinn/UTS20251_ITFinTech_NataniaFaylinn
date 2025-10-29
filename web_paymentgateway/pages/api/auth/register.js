@@ -1,4 +1,4 @@
-// pages/api/auth/register.js
+// 📁 /pages/api/auth/register.js
 import dbConnect from "@/lib/mongoose";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
@@ -11,35 +11,35 @@ export default async function handler(req, res) {
     return res.status(405).json({ success: false, error: "Method not allowed" });
   }
 
-  const { name, phone, password } = req.body;
+  const { name, email, phone, password } = req.body;
 
-  if (!name || !phone || !password) {
+  if (!name || !phone || !password || !email) {
     return res.status(400).json({ success: false, error: "Semua field wajib diisi" });
   }
 
-  // 🔹 Format nomor ke bentuk internasional
-  let phoneFormatted = phone.trim();
-  phoneFormatted = phoneFormatted.replace(/[\s\-()]/g, ""); // hapus karakter aneh
-
+  // Format nomor HP
+  let phoneFormatted = phone.trim().replace(/[\s\-()]/g, "");
   if (phoneFormatted.startsWith("0")) {
     phoneFormatted = "+62" + phoneFormatted.slice(1);
   } else if (!phoneFormatted.startsWith("+62")) {
-    phoneFormatted = "+62" + phoneFormatted; // fallback
+    phoneFormatted = "+62" + phoneFormatted;
   }
 
   try {
-    const existing = await User.findOne({ phone: phoneFormatted });
+    const existing = await User.findOne({
+      $or: [{ phone: phoneFormatted }, { email: email.toLowerCase() }],
+    });
     if (existing) {
-      return res.status(400).json({ success: false, error: "Nomor sudah terdaftar" });
+      return res.status(400).json({ success: false, error: "Nomor atau email sudah terdaftar" });
     }
 
     const hashed = await bcrypt.hash(password, 10);
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const otpExpires = new Date(Date.now() + 5 * 60 * 1000); // 5 menit
+    const otpExpires = new Date(Date.now() + 5 * 60 * 1000);
 
-    // ⬇️ Simpan user ke DB dulu
     await User.create({
       name,
+      email: email.toLowerCase(),
       phone: phoneFormatted,
       password: hashed,
       otp,
@@ -47,16 +47,14 @@ export default async function handler(req, res) {
       verified: false,
     });
 
-    // Kirim OTP via WhatsApp
     await sendWhatsApp(
       phoneFormatted,
-      `Kode OTP Anda: *${otp}*. Berlaku 5 menit.`
+      `Kode OTP kamu adalah *${otp}*. Berlaku 5 menit.`
     );
 
-    console.log("✅ OTP terkirim ke:", phoneFormatted, otp);
     return res.status(201).json({
       success: true,
-      message: "Kode OTP dikirim. Silakan verifikasi untuk aktivasi akun.",
+      message: "Kode OTP dikirim ke WhatsApp. Silakan verifikasi akun.",
     });
   } catch (err) {
     console.error("❌ Register error:", err);
