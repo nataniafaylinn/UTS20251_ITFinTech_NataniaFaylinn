@@ -8,7 +8,7 @@ export default function Home() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.push("/login");
+      router.push("/select-items");
     }, 3000); // redirect setelah 3 detik
     return () => clearTimeout(timer);
   }, [router]);
@@ -26,7 +26,7 @@ export default function Home() {
 
       {/* Judul */}
       <h1 className="text-3xl font-extrabold text-[#8B0000]">
-        Selamat datang di pudinginaja.jkt 🍮
+        Selamat datang di pudinginaja.jkt
       </h1>
       
       {/* Loading Spinner */}

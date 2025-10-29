@@ -1,7 +1,7 @@
 // /pages/api/auth/request-otp.js
 import dbConnect from "@/lib/mongoose";
 import User from "@/models/User";
-import { sendWhatsApp } from "@/utils/twilioClient";
+import { sendWhatsApp } from "@/utils/fonnteClient";
 
 export default async function handler(req, res) {
   await dbConnect();

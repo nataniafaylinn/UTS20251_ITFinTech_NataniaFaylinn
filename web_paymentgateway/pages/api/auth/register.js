@@ -1,8 +1,8 @@
-// /pages/api/auth/register.js
+// pages/api/auth/register.js
 import dbConnect from "@/lib/mongoose";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
-import { sendWhatsApp } from "@/utils/twilioClient";
+import { sendWhatsApp } from "@/utils/fonnteClient";
 
 export default async function handler(req, res) {
   await dbConnect();
@@ -17,8 +17,18 @@ export default async function handler(req, res) {
     return res.status(400).json({ success: false, error: "Semua field wajib diisi" });
   }
 
+  // 🔹 Format nomor ke bentuk internasional
+  let phoneFormatted = phone.trim();
+  phoneFormatted = phoneFormatted.replace(/[\s\-()]/g, ""); // hapus karakter aneh
+
+  if (phoneFormatted.startsWith("0")) {
+    phoneFormatted = "+62" + phoneFormatted.slice(1);
+  } else if (!phoneFormatted.startsWith("+62")) {
+    phoneFormatted = "+62" + phoneFormatted; // fallback
+  }
+
   try {
-    const existing = await User.findOne({ phone });
+    const existing = await User.findOne({ phone: phoneFormatted });
     if (existing) {
       return res.status(400).json({ success: false, error: "Nomor sudah terdaftar" });
     }
@@ -30,7 +40,7 @@ export default async function handler(req, res) {
     // ⬇️ Simpan user ke DB dulu
     await User.create({
       name,
-      phone,
+      phone: phoneFormatted,
       password: hashed,
       otp,
       otpExpires,
@@ -38,9 +48,12 @@ export default async function handler(req, res) {
     });
 
     // Kirim OTP via WhatsApp
-    await sendWhatsApp(phone, `Kode OTP Anda: *${otp}*. Berlaku 5 menit.`);
+    await sendWhatsApp(
+      phoneFormatted,
+      `Kode OTP Anda: *${otp}*. Berlaku 5 menit.`
+    );
 
-    console.log("✅ OTP terkirim ke:", phone, otp);
+    console.log("✅ OTP terkirim ke:", phoneFormatted, otp);
     return res.status(201).json({
       success: true,
       message: "Kode OTP dikirim. Silakan verifikasi untuk aktivasi akun.",
