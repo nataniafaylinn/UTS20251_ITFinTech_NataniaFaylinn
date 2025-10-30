@@ -3,6 +3,8 @@ import dbConnect from "@/lib/mongoose";
 import Payment from "@/models/Payment";
 import Checkout from "@/models/Checkout";
 import Order from "@/models/Order";
+import User from "@/models/User";
+import { sendPaymentSuccessNotification } from "@/lib/whatsapp";
 
 export const config = {
   api: {
@@ -94,6 +96,32 @@ export default async function handler(req, res) {
     // Update checkout jadi PAID
     checkout.status = "PAID";
     await checkout.save();
+
+    // 🔥 KIRIM NOTIFIKASI WHATSAPP JIKA USER LOGIN
+    if (checkout.user) {
+      try {
+        const user = await User.findById(checkout.user);
+        if (user && user.phone) {
+          const paymentData = {
+            paymentId: payment._id.toString(),
+            amount: checkout.total,
+            paidAt: new Date().toISOString(),
+            items: checkout.items
+          };
+
+          const result = await sendPaymentSuccessNotification(user.phone, paymentData);
+
+          if (result.success) {
+            console.log('✅ Notifikasi WhatsApp pembayaran berhasil terkirim ke:', user.phone);
+          } else {
+            console.warn('⚠️ Gagal mengirim notifikasi WhatsApp pembayaran');
+          }
+        }
+      } catch (whatsappError) {
+        console.error('❌ Error sending payment WhatsApp notification:', whatsappError);
+        // Jangan gagalkan proses webhook jika notifikasi gagal
+      }
+    }
 
     res.status(200).json({ success: true, message: "Order created", orderId: newOrder._id });
   } catch (err) {

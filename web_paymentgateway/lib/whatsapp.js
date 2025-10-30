@@ -1,3 +1,4 @@
+//lib/whatsapp.js
 import axios from 'axios';
 
 export async function sendFonnteNotification(phone, message) {
@@ -68,23 +69,7 @@ Terima kasih! 🍮`;
 }
 
 export async function sendPaymentSuccessNotification(phone, paymentData) {
-  const { paymentId, amount, paidAt, items } = paymentData;
-  
-  const message = `🎉 *PEMBAYARAN BERHASIL* 🎉
-
-Selamat! Pembayaran Anda telah berhasil diverifikasi.
-
-💰 *Detail Pembayaran:*
-ID Transaksi: ${paymentId}
-Amount: Rp ${amount.toLocaleString('id-ID')}
-Tanggal Bayar: ${new Date(paidAt).toLocaleDateString('id-ID')}
-
-📦 *Pesanan Anda:*
-${items.map(item => `• ${item.name} (${item.quantity}x)`).join('\n')}
-
-Pesanan Anda sedang diproses dan akan segera dikirim.
-
-Terima kasih telah berbelanja di PudinginAja! 🍮`;
+  const message = "Pembayaran anda sudah berhasil";
 
   return await sendFonnteNotification(phone, message);
 }

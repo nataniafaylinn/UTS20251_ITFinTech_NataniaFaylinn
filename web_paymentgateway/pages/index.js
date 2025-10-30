@@ -8,7 +8,7 @@ export default function Home() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.push("/select-items");
+      router.push("/login");
     }, 3000); // redirect setelah 3 detik
     return () => clearTimeout(timer);
   }, [router]);
