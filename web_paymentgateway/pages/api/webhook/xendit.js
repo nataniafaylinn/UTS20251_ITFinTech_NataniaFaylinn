@@ -1,5 +1,5 @@
 // /pages/api/webhook/xendit.js
-import dbConnect from "@/lib/dbConnect";
+import dbConnect from "@/lib/mongoose";
 import Payment from "@/models/Payment";
 import Checkout from "@/models/Checkout";
 import Order from "@/models/Order";
